@@ -10,7 +10,6 @@ class Piece:
 
     def move(self, new_a1):
         possible = self.get_possible_moves(self.position, self.is_lower, self.promoted)
-        print(self.name, possible)
 
         if new_a1 in possible:
             self.position = new_a1
