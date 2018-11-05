@@ -44,6 +44,7 @@ def stringifyBoard(board):
     s += '    a  b  c  d  e' + os.linesep
     return s
 
+
 def parseTestCase(path):
     f = open(path)
     line = f.readline()

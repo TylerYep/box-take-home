@@ -10,10 +10,8 @@ class Piece:
 
     def move(self, new_a1):
         possible = self.get_possible_moves(self.position, self.is_lower, self.promoted)
-
         if new_a1 in possible:
             self.position = new_a1
-            # update all other pieces
             return True
 
         return False
@@ -45,7 +43,7 @@ class King(Piece):
 
     def __repr__(self):
         ''' Used to distiguish Piece objects for logging. '''
-        s = '_'
+        s = ' '
         if self.promoted: s = '+'
         if self.is_lower:
             return s + 'k'
@@ -64,16 +62,16 @@ class Pawn(Piece):
         if promoted:
             possible_moves |= GoldGeneral.get_possible_moves(position, is_lower, False)
         x, y = utils.get_coords(position)
-        new_pos = utils.get_a1(x, y - 1)
-        if is_lower:
-            new_pos = utils.get_a1(x, y + 1)
+        new_pos = utils.get_a1(x, y + 1)
+        if not is_lower:
+            new_pos = utils.get_a1(x, y - 1)
         if utils.in_bounds(new_pos):
             possible_moves.add(new_pos)
         return possible_moves
 
     def __repr__(self):
         ''' Used to distiguish Piece objects for logging. '''
-        s = '_'
+        s = ' '
         if self.promoted: s = '+'
         if self.is_lower:
             return s + 'p'
@@ -103,7 +101,7 @@ class Rook(Piece):
 
     def __repr__(self):
         ''' Used to distiguish Piece objects for logging. '''
-        s = '_'
+        s = ' '
         if self.promoted: s = '+'
         if self.is_lower:
             return s + 'r'
@@ -134,7 +132,7 @@ class Bishop(Piece):
 
     def __repr__(self):
         ''' Used to distiguish Piece objects for logging. '''
-        s = '_'
+        s = ' '
         if self.promoted: s = '+'
         if self.is_lower:
             return s + 'b'
@@ -157,6 +155,9 @@ class SilverGeneral(Piece):
         for i in range(-1, 2):
             for j in range(-1, 2):
                 new_pos = utils.get_a1(x + i, y + j)
+                if not is_lower:
+                    new_pos = utils.get_a1(x + i, y - j)
+
                 if utils.in_bounds(new_pos) and not (i == 0 and j == 0) \
                 and not (i == -1 and j == 0) and not (i == 1 and j == 0) \
                 and not (i == 0 and j == -1): # and not player_in_check
@@ -165,7 +166,7 @@ class SilverGeneral(Piece):
 
     def __repr__(self):
         ''' Used to distiguish Piece objects for logging. '''
-        s = '_'
+        s = ' '
         if self.promoted: s = '+'
         if self.is_lower:
             return s + 's'
@@ -181,18 +182,20 @@ class GoldGeneral(Piece):
     def get_possible_moves(position, is_lower, promoted):
         possible_moves = set()
         x, y = utils.get_coords(position)
-
         for i in range(-1, 2):
             for j in range(-1, 2):
                 new_pos = utils.get_a1(x + i, y + j)
-                if utils.in_bounds(new_pos) and not (i == -1 and j == -1) \
-                and not (i == 1 and j == -1): # and not player_in_check
+                if not is_lower:
+                    new_pos = utils.get_a1(x + i, y - j)
+
+                if utils.in_bounds(new_pos) and not (i == 0 and j == 0) \
+                and not (i == -1 and j == -1) and not (i == 1 and j == -1): # and not player_in_check
                     possible_moves.add(new_pos)
         return possible_moves
 
     def __repr__(self):
         ''' Used to distiguish Piece objects for logging. '''
-        s = '_'
+        s = ' '
         if self.is_lower:
             return s + 'g'
         return s + 'G'
