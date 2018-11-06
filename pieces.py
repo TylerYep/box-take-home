@@ -57,7 +57,7 @@ class Pawn(Piece):
     def get_possible_moves(position, team, promoted):
         possible_moves = set()
         if promoted:
-            possible_moves |= GoldGeneral.get_possible_moves(position, team, False)
+            return GoldGeneral.get_possible_moves(position, team, False)
         x, y = utils.get_coords(position)
         new_pos = utils.get_a1(x, y + 1)
         if team == 'UPPER':
@@ -147,7 +147,7 @@ class SilverGeneral(Piece):
     def get_possible_moves(position, team, promoted):
         possible_moves = set()
         if promoted:
-            possible_moves |= GoldGeneral.get_possible_moves(position, team, False)
+            return GoldGeneral.get_possible_moves(position, team, False)
         x, y = utils.get_coords(position)
 
         for i in range(-1, 2):

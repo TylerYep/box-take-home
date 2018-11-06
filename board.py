@@ -24,6 +24,7 @@ class Board:
 
     def find_available_moves(self, a1, player_turn):
         available_moves = []
+        # Moves
         for a in range(const.BOARD_SIZE):
             for b in range(const.BOARD_SIZE):
                 piece = self.board[a][b]
@@ -33,7 +34,6 @@ class Board:
                     # simulate_move()
                     #     if not self.pos_in_check(a1, player_turn):
                     #         available_moves.append(move)
-
         # Drops
 
         return available_moves
@@ -69,37 +69,39 @@ class Board:
     def move_piece(self, pos1, pos2, player_turn, should_promote = False):
         ''' Return True if move was successful '''
         pz = self.get_piece_at_pos(pos1)
+        if isinstance(pz, Pawn) and ((player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
+            (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1)):
+            should_promote = True
+
         if pz is not '__' and pz.move(pos2):
             if not self.verify_player_turn(pz, player_turn):
                 return False
 
-            pz2 = self.get_piece_at_pos(pos2)
+            if should_promote:
+                if pz.promoted or isinstance(pz, King) or isinstance(pz, GoldGeneral):
+                    return False
 
+                if (player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
+                    (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1) or \
+                    (player_turn == 'UPPER' and utils.get_coords(pos1)[1] == 0) or \
+                        (player_turn == 'lower' and utils.get_coords(pos1)[1] == const.BOARD_SIZE - 1):
+                    pz.promoted = True
+                else:
+                    return False
+
+            pz2 = self.get_piece_at_pos(pos2)
             if pz2 is not '__':
                 if pz2.team == pz.team:
                     return False
-
                 if player_turn == 'lower':
                     self.lower_captures.append(str(pz2)[1].lower())
                 elif player_turn == 'UPPER':
                     self.upper_captures.append(str(pz2)[1].upper())
 
-            if should_promote:
-                if isinstance(pz, King) or isinstance(pz, GoldGeneral):
-                    return False
-
-                if (player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
-                    (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1):
-                    pz.promoted = True
-                else:
-                    return False
             self.set_coord(pz, pos2)
             self.set_coord('__', pos1)
             return True
-
         return False
-
-
 
     def drop_piece(self, piece, pos):
         ''' Return True if move was successful '''

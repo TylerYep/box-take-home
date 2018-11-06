@@ -36,6 +36,7 @@ def execute_command(board, move, player_turn, verbose = True):
             should_promote = True
         pos1 = move_arr[1]
         pos2 = move_arr[2]
+
         valid_move = board.move_piece(pos1, pos2, player_turn, should_promote)
         return valid_move
 
@@ -70,8 +71,9 @@ def execute_file(board, moves):
         player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
         valid_move = execute_command(board, move, player_turn, False)
         turns += 1
+        if not valid_move: break
 
-    print(player_turn + ' player action: ' + moves[-1])
+    print(player_turn + ' player action: ' + move)
     output_game_state(board)
     player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
 
