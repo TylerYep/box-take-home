@@ -1,5 +1,4 @@
 import utils
-import const
 
 class Piece:
     def __init__(self, position, team, promoted=False):
@@ -8,8 +7,8 @@ class Piece:
         self.name = 'Piece'
         self.promoted = False
 
-    def move(self, new_a1):
-        possible = self.get_possible_moves(self.position, self.team, self.promoted)
+    def move(self, board, new_a1):
+        possible = self.get_possible_moves(board, self.position, self.team, self.promoted)
         if new_a1 in possible:
             self.position = new_a1
             return True
@@ -27,7 +26,7 @@ class King(Piece):
         self.name = 'King'
 
     @staticmethod
-    def get_possible_moves(position, team, promoted):
+    def get_possible_moves(board, position, team, promoted):
         possible_moves = set()
         x, y = utils.get_coords(position)
 
@@ -54,11 +53,13 @@ class Pawn(Piece):
         self.promoted = promoted
 
     @staticmethod
-    def get_possible_moves(position, team, promoted):
-        possible_moves = set()
+    def get_possible_moves(board, position, team, promoted):
         if promoted:
-            return GoldGeneral.get_possible_moves(position, team, False)
+            return GoldGeneral.get_possible_moves(board, position, team, False)
+
+        possible_moves = set()
         x, y = utils.get_coords(position)
+
         new_pos = utils.get_a1(x, y + 1)
         if team == 'UPPER':
             new_pos = utils.get_a1(x, y - 1)
@@ -82,18 +83,52 @@ class Rook(Piece):
         self.promoted = promoted
 
     @staticmethod
-    def get_possible_moves(position, team, promoted):
+    def get_possible_moves(board, position, team, promoted):
         possible_moves = set()
         if promoted:
-            possible_moves |= King.get_possible_moves(position, team, False)
+            possible_moves |= King.get_possible_moves(board, position, team, False)
+
         x, y = utils.get_coords(position)
-        for i in range(-const.BOARD_SIZE, const.BOARD_SIZE):
+        for i in range(1, len(board)):
             new_pos = utils.get_a1(x + i, y)
             if utils.in_bounds(new_pos):
-                possible_moves.add(new_pos)
+                pz = board[x+i][y]
+                if pz != '__':
+                    if pz.team != team:
+                        possible_moves.add(new_pos)
+                    break
+                else:
+                    possible_moves.add(new_pos)
+        for i in range(1, len(board)):
             new_pos = utils.get_a1(x, y + i)
             if utils.in_bounds(new_pos):
-                possible_moves.add(new_pos)
+                pz = board[x][y+i]
+                if pz != '__':
+                    if pz.team != team:
+                        possible_moves.add(new_pos)
+                    break
+                else:
+                    possible_moves.add(new_pos)
+        for i in range(1, len(board)):
+            new_pos = utils.get_a1(x - i, y)
+            if utils.in_bounds(new_pos):
+                pz = board[x-i][y]
+                if pz != '__':
+                    if pz.team != team:
+                        possible_moves.add(new_pos)
+                    break
+                else:
+                    possible_moves.add(new_pos)
+        for i in range(1, len(board)):
+            new_pos = utils.get_a1(x, y - i)
+            if utils.in_bounds(new_pos):
+                pz = board[x][y-i]
+                if pz != '__':
+                    if pz.team != team:
+                        possible_moves.add(new_pos)
+                    break
+                else:
+                    possible_moves.add(new_pos)
         return possible_moves
 
     def __repr__(self):
@@ -112,19 +147,53 @@ class Bishop(Piece):
         self.promoted = promoted
 
     @staticmethod
-    def get_possible_moves(position, team, promoted):
+    def get_possible_moves(board, position, team, promoted):
         possible_moves = set()
         if promoted:
-            possible_moves |= King.get_possible_moves(position, team, False)
+            possible_moves |= King.get_possible_moves(board, position, team, False)
         x, y = utils.get_coords(position)
 
-        for i in range(-const.BOARD_SIZE, const.BOARD_SIZE):
+        for i in range(1, len(board)):
             new_pos = utils.get_a1(x + i, y + i)
             if utils.in_bounds(new_pos):
-                possible_moves.add(new_pos)
+                pz = board[x+i][y+i]
+                if pz != '__':
+                    if pz.team != team:
+                        possible_moves.add(new_pos)
+                    break
+                else:
+                    possible_moves.add(new_pos)
+
+        for i in range(1, len(board)):
+            new_pos = utils.get_a1(x - i, y + i)
+            if utils.in_bounds(new_pos):
+                pz = board[x-i][y+i]
+                if pz != '__':
+                    if pz.team != team:
+                        possible_moves.add(new_pos)
+                    break
+                else:
+                    possible_moves.add(new_pos)
+        for i in range(1, len(board)):
             new_pos = utils.get_a1(x + i, y - i)
             if utils.in_bounds(new_pos):
-                possible_moves.add(new_pos)
+                pz = board[x+i][y-i]
+                if pz != '__':
+                    if pz.team != team:
+                        possible_moves.add(new_pos)
+                    break
+                else:
+                    possible_moves.add(new_pos)
+        for i in range(1, len(board)):
+            new_pos = utils.get_a1(x - i, y - i)
+            if utils.in_bounds(new_pos):
+                pz = board[x-i][y-i]
+                if pz != '__':
+                    if pz.team != team:
+                        possible_moves.add(new_pos)
+                    break
+                else:
+                    possible_moves.add(new_pos)
         return possible_moves
 
 
@@ -144,10 +213,11 @@ class SilverGeneral(Piece):
         self.promoted = promoted
 
     @staticmethod
-    def get_possible_moves(position, team, promoted):
-        possible_moves = set()
+    def get_possible_moves(board, position, team, promoted):
         if promoted:
-            return GoldGeneral.get_possible_moves(position, team, False)
+            return GoldGeneral.get_possible_moves(board, position, team, False)
+
+        possible_moves = set()
         x, y = utils.get_coords(position)
 
         for i in range(-1, 2):
@@ -177,7 +247,7 @@ class GoldGeneral(Piece):
         self.name = 'GoldGeneral'
 
     @staticmethod
-    def get_possible_moves(position, team, promoted):
+    def get_possible_moves(board, position, team, promoted):
         possible_moves = set()
         x, y = utils.get_coords(position)
         for i in range(-1, 2):

@@ -12,17 +12,17 @@ class Board:
             pos = item['position']
             self.set_coord(self.get_piece_from_map(piece, pos))
 
-    def find_checks(self, player_turn):
-        ''' Returns empty list is player is not in check. '''
+    def king_in_check(self, player_turn):
+        ''' Returns False is player is not in check. '''
         for a in range(const.BOARD_SIZE):
             for b in range(const.BOARD_SIZE):
                 piece = self.board[a][b]
                 if isinstance(piece, King) and piece.team == player_turn:
                     if self.pos_in_check(utils.get_a1(a, b), player_turn):
-                        return self.find_available_moves(utils.get_a1(a, b), player_turn)
-        return []
+                        return True
+        return False
 
-    def find_available_moves(self, a1, player_turn):
+    def find_available_moves(self, player_turn):
         available_moves = []
         # Moves
         for a in range(const.BOARD_SIZE):
@@ -44,21 +44,16 @@ class Board:
             for b in range(const.BOARD_SIZE):
                 piece = self.board[a][b]
                 if isinstance(piece, Piece) and piece.team == opposing_team:
-                    if a1 in piece.get_possible_moves(piece.position, piece.team, piece.promoted):
+                    if a1 in piece.get_possible_moves(self.board, piece.position, piece.team, piece.promoted):
                         return True
         return False
 
     def get_piece_from_map(self, pz, pos):
-        PIECE_MAP = dict({
-            'k': King, 'b': Bishop,
-            'g': GoldGeneral, 's': SilverGeneral,
-            'r': Rook, 'p': Pawn
-        })
         if len(pz) > 1:
-            piece = PIECE_MAP[pz[1].lower()]
+            piece = const.PIECE_MAP[pz[1].lower()]
             return piece(pos, 'lower' if pz[1].islower() else 'UPPER', True)
 
-        piece = PIECE_MAP[pz.lower()]
+        piece = const.PIECE_MAP[pz.lower()]
         return piece(pos, 'lower' if pz.islower() else 'UPPER', False)
 
     def verify_player_turn(self, pz, player_turn):
@@ -73,7 +68,7 @@ class Board:
             (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1)):
             should_promote = True
 
-        if pz is not '__' and pz.move(pos2):
+        if pz is not '__' and pz.move(self.board, pos2):
             if not self.verify_player_turn(pz, player_turn):
                 return False
 
@@ -103,9 +98,41 @@ class Board:
             return True
         return False
 
-    def drop_piece(self, piece, pos):
+    def drop_piece(self, player_turn, piece, pos):
         ''' Return True if move was successful '''
-        pass
+        piece_name = str(piece)
+        if len(piece_name) > 1:
+            piece_name = piece_name[1]
+
+        # Cannot place Pawn in promotion zone or in same row as another Pawn.
+        if piece_name.lower() == 'p':
+            if ((player_turn == 'UPPER' and utils.get_coords(pos)[1] == 0) or \
+                (player_turn == 'lower' and utils.get_coords(pos)[1] == const.BOARD_SIZE - 1)):
+                return False
+            else:
+                x, y = utils.get_coords(pos)
+                for j in range(const.BOARD_SIZE):
+                    if isinstance(self.board[x][j], Pawn) and self.board[x][j].team == player_turn:
+                        return False
+
+        # Only drop pieces in empty spaces
+        if self.get_piece_at_pos(pos) == '__':
+            if player_turn == 'UPPER':
+                for i in range(len(self.upper_captures)):
+                    if self.upper_captures[i].lower() == piece_name.lower():
+                        new_piece = const.PIECE_MAP[piece_name](pos, player_turn)
+                        self.set_coord(new_piece, pos)
+                        del self.upper_captures[i]
+                        return True
+
+            elif player_turn == 'lower':
+                for i in range(len(self.lower_captures)):
+                    if self.lower_captures[i] == piece_name:
+                        new_piece = const.PIECE_MAP[piece_name](pos, player_turn)
+                        self.set_coord(new_piece, pos)
+                        del self.lower_captures[i]
+                        return True
+        return False
 
     def get_piece_at_pos(self, a1):
         if utils.in_bounds(a1):
@@ -116,6 +143,7 @@ class Board:
                 return '__'
         else:
             print("Not in bounds")
+            return False
 
     def set_coord(self, piece, a1=None):
         if a1 is None:

@@ -27,6 +27,7 @@ def play_game(test_case, is_interactive):
     else: # is file mode
         execute_file(board, test_case['moves'])
 
+
 def execute_command(board, move, player_turn, verbose = True):
     move_arr = move.split(' ')
     if verbose: print(board)
@@ -43,7 +44,7 @@ def execute_command(board, move, player_turn, verbose = True):
     elif move_arr[0] == 'drop':
         piece = move_arr[1]
         pos = move_arr[2]
-        valid_move = board.drop_piece(piece, pos)
+        valid_move = board.drop_piece(player_turn, piece, pos)
         return valid_move
 
 
@@ -58,7 +59,6 @@ def output_game_state(board):
     for cap in board.lower_captures:
         print(cap, end=' ')
     print('\n')
-
 
 
 def execute_file(board, moves):
@@ -77,17 +77,21 @@ def execute_file(board, moves):
     output_game_state(board)
     player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
 
-    available_moves = board.find_checks(player_turn)
-    if available_moves:
-        print(player_turn + ' player is in check!')
-        print('Available moves: ')
-        for move in available_moves:
-            print(move)
-
     if not valid_move:
         print(player_turn + ' player wins.  Illegal move.')
     else:
+        if board.king_in_check(player_turn):
+            available_moves = board.find_available_moves(player_turn)
+            if available_moves:
+                print(player_turn + ' player is in check!')
+                print('Available moves: ')
+                for move in available_moves:
+                    print(move)
+            else:
+                print(player_turn + ' Checkmate!')
+
         print(player_turn + '> ')
+
 
 
 def execute_interactive(board):
