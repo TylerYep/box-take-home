@@ -13,7 +13,7 @@ class Board:
             self.set_coord(self.get_piece_from_map(piece, pos))
 
     def king_in_check(self, player_turn):
-        ''' Returns False is player is not in check. '''
+        ''' Returns True is player's King is in check. '''
         for a in range(const.BOARD_SIZE):
             for b in range(const.BOARD_SIZE):
                 piece = self.board[a][b]
@@ -23,6 +23,7 @@ class Board:
         return False
 
     def find_available_moves(self, player_turn):
+        ''' Searches for moves to get out of check. '''
         available_moves = []
         # Moves
         for a in range(const.BOARD_SIZE):
@@ -39,6 +40,8 @@ class Board:
         return available_moves
 
     def pos_in_check(self, a1, player_turn):
+        ''' Returns True is a given position is in check (aka can be taken by an opponent's piece). '''
+
         opposing_team = 'lower' if player_turn == 'UPPER' else 'UPPER'
         for a in range(const.BOARD_SIZE):
             for b in range(const.BOARD_SIZE):
@@ -49,6 +52,7 @@ class Board:
         return False
 
     def get_piece_from_map(self, pz, pos):
+        ''' Returns constructor for a piece object. '''
         if len(pz) > 1:
             piece = const.PIECE_MAP[pz[1].lower()]
             return piece(pos, 'lower' if pz[1].islower() else 'UPPER', True)
@@ -57,12 +61,19 @@ class Board:
         return piece(pos, 'lower' if pz.islower() else 'UPPER', False)
 
     def verify_player_turn(self, pz, player_turn):
+        ''' Returns True if the piece belongs to the given player. '''
         if player_turn is not None:
             return player_turn == pz.team
         return True
 
     def move_piece(self, pos1, pos2, player_turn, should_promote = False):
-        ''' Return True if move was successful '''
+        ''' Return True if move was successful.
+            Verifies correct player's turn,
+            Promotion is valid (especailly for pawns)
+            Piece is on last row to be promoted
+            Updates board.captures
+
+        '''
         pz = self.get_piece_at_pos(pos1)
         if isinstance(pz, Pawn) and ((player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
             (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1)):
@@ -99,7 +110,7 @@ class Board:
         return False
 
     def drop_piece(self, player_turn, piece, pos):
-        ''' Return True if move was successful '''
+        ''' Return True if drop was successful '''
         piece_name = str(piece)
         if len(piece_name) > 1:
             piece_name = piece_name[1]
@@ -135,6 +146,8 @@ class Board:
         return False
 
     def get_piece_at_pos(self, a1):
+        ''' Returns piece object at an a1 location. '''
+
         if utils.in_bounds(a1):
             x, y = utils.get_coords(a1)
             if isinstance(self.board[x][y], Piece):
@@ -146,6 +159,8 @@ class Board:
             return False
 
     def set_coord(self, piece, a1=None):
+        ''' Sets coordinate of a piece. If a1 is None, defaults to piece.position. '''
+
         if a1 is None:
             a1 = piece.position
         if utils.in_bounds(a1):

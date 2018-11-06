@@ -9,26 +9,24 @@ def main():
     if argc > 1 and sys.argv[1] == '-f':
         file_name = sys.argv[2]
         test_case = utils.parseTestCase(file_name)
-        play_game(test_case, False)
+        board = Board(test_case['initialPieces'], test_case['upperCaptures'], test_case['lowerCaptures'])
+
+        play_game_file(board, test_case['moves'])
 
     elif argc > 1 and sys.argv[1] == '-i':
         test_case = utils.parseTestCase('tests/initialMove.in')
-        play_game(test_case, True)
+        board = Board(test_case['initialPieces'], test_case['upperCaptures'], test_case['lowerCaptures'])
+        play_game_interactive(board)
 
     else:
         print('Invalid command line arguments')
 
 
-def play_game(test_case, is_interactive):
-    board = Board(test_case['initialPieces'], test_case['upperCaptures'], test_case['lowerCaptures'])
-
-    if is_interactive:
-        execute_interactive(board)
-    else: # is file mode
-        execute_file(board, test_case['moves'])
-
-
 def execute_command(board, move, player_turn, verbose = True):
+    ''' Takes any command and manipulated the given board.
+        - move (with promote)
+        - drop
+    '''
     move_arr = move.split(' ')
     if verbose: print(board)
     if move_arr[0] == 'move':
@@ -49,6 +47,7 @@ def execute_command(board, move, player_turn, verbose = True):
 
 
 def output_game_state(board):
+    ''' Outputs game state as specified in the spec. '''
     print(board)
     print('Captures UPPER: ', end='')
     for cap in board.upper_captures:
@@ -61,7 +60,9 @@ def output_game_state(board):
     print('\n')
 
 
-def execute_file(board, moves):
+def play_game_file(board, moves):
+    ''' Plays game automatically using specified moves. '''
+
     assert len(moves) != 0
     # print(moves)
     valid_move = True
@@ -94,7 +95,9 @@ def execute_file(board, moves):
 
 
 
-def execute_interactive(board):
+def play_game_interactive(board):
+    ''' Plays game interactively using a turn-based system. '''
+
     turns = 0
     player_turn = 'lower'
 
@@ -120,8 +123,6 @@ def execute_interactive(board):
         if not valid_move:
             print(player_turn + ' player wins. Illegal move.')
             break
-
-
 
 
 if __name__ == '__main__':

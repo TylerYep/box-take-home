@@ -1,18 +1,6 @@
 import os
 import const
 
-def _stringifySquare(sq):
-    if type(sq) is not str or len(sq) > 2:
-        raise ValueError('Board must be an array of strings like "", "P", or "+P"')
-
-    if len(sq) == 0:
-        return '__|'
-    if len(sq) == 1:
-        return ' ' + sq + '|'
-    if len(sq) == 2:
-        return sq + '|'
-
-
 def get_coords(a1):
     ''' a1 is the move, given as a letter and a number. '''
     letter, number = a1
@@ -44,6 +32,18 @@ def stringifyBoard(board):
         s += os.linesep
     s += '    a  b  c  d  e' + os.linesep
     return s
+
+
+def _stringifySquare(sq):
+    if type(sq) is not str or len(sq) > 2:
+        raise ValueError('Board must be an array of strings like "", "P", or "+P"')
+
+    if len(sq) == 0:
+        return '__|'
+    if len(sq) == 1:
+        return ' ' + sq + '|'
+    if len(sq) == 2:
+        return sq + '|'
 
 
 def parseTestCase(path):
