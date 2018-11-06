@@ -19,6 +19,14 @@ def main():
         print('Invalid command line arguments')
 
 
+def play_game(test_case, is_interactive):
+    board = Board(test_case['initialPieces'], test_case['upperCaptures'], test_case['lowerCaptures'])
+
+    if is_interactive:
+        execute_interactive(board)
+    else: # is file mode
+        execute_file(board, test_case['moves'])
+
 def execute_command(board, move, player_turn, verbose = True):
     move_arr = move.split(' ')
     if verbose: print(board)
@@ -54,7 +62,7 @@ def output_game_state(board):
 
 def execute_file(board, moves):
     assert len(moves) != 0
-    # print(moves)                                                # TODO
+    # print(moves)
     valid_move = True
     turns = 0
     player_turn = ''
@@ -65,46 +73,48 @@ def execute_file(board, moves):
 
     print(player_turn + ' player action: ' + moves[-1])
     output_game_state(board)
-
     player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
+
+    available_moves = board.find_checks(player_turn)
+    if available_moves:
+        print(player_turn + ' player is in check!')
+        print('Available moves: ')
+        for move in available_moves:
+            print(move)
+
     if not valid_move:
         print(player_turn + ' player wins.  Illegal move.')
     else:
         print(player_turn + '> ')
 
 
-def play_game(test_case, is_interactive):
-    board = Board(test_case['initialPieces'], test_case['upperCaptures'], test_case['lowerCaptures'])
-
-    if is_interactive:
-        execute_interactive(board)
-    else: # is file_name
-        execute_file(board, test_case['moves'])
-
-
-
-
 def execute_interactive(board):
     turns = 0
-    player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
+    player_turn = 'lower'
 
     while turns < const.MAX_MOVES:
         output_game_state(board)
 
+        # available_moves = board.find_checks(player_turn)
+        # if available_moves:
+        #     print(player_turn + ' player is in check!')
+        #     print('Available moves: ')
+        #     for move in available_moves:
+        #         print(move)
+
         print(player_turn + '> ', end = '')
         move = input()
-
         print(player_turn + ' player action: ' + move)
 
-        move_arr = move.split(' ')
-        valid_move = board.move_piece(move_arr[1], move_arr[2], player_turn)
+        player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
+        valid_move = execute_command(board, move, player_turn, False)
+        turns += 1
+        player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
+
         if not valid_move:
             print(player_turn + ' player wins. Illegal move.')
             break
 
-        player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
-
-    print(board)
 
 
 

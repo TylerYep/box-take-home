@@ -12,12 +12,39 @@ class Board:
             pos = item['position']
             self.set_coord(self.get_piece_from_map(piece, pos))
 
-    def is_pos_in_check(a1, opposing_team):
+    def find_checks(self, player_turn):
+        ''' Returns empty list is player is not in check. '''
         for a in range(const.BOARD_SIZE):
             for b in range(const.BOARD_SIZE):
                 piece = self.board[a][b]
-                if piece.is_lower == opposing_team:
-                    if a1 in piece.get_possible_moves(piece.position, piece.is_lower, piece.promoted):
+                if isinstance(piece, King) and piece.team == player_turn:
+                    if self.pos_in_check(utils.get_a1(a, b), player_turn):
+                        return self.find_available_moves(utils.get_a1(a, b), player_turn)
+        return []
+
+    def find_available_moves(self, a1, player_turn):
+        available_moves = []
+        for a in range(const.BOARD_SIZE):
+            for b in range(const.BOARD_SIZE):
+                piece = self.board[a][b]
+                if isinstance(piece, Piece) and piece.team == player_turn:
+                    pass
+                    # for move in get_all_moves(): # TODO
+                    # simulate_move()
+                    #     if not self.pos_in_check(a1, player_turn):
+                    #         available_moves.append(move)
+
+        # Drops
+
+        return available_moves
+
+    def pos_in_check(self, a1, player_turn):
+        opposing_team = 'lower' if player_turn == 'UPPER' else 'UPPER'
+        for a in range(const.BOARD_SIZE):
+            for b in range(const.BOARD_SIZE):
+                piece = self.board[a][b]
+                if isinstance(piece, Piece) and piece.team == opposing_team:
+                    if a1 in piece.get_possible_moves(piece.position, piece.team, piece.promoted):
                         return True
         return False
 
@@ -29,20 +56,18 @@ class Board:
         })
         if len(pz) > 1:
             piece = PIECE_MAP[pz[1].lower()]
-            return piece(pos, pz[1].islower(), True)
+            return piece(pos, 'lower' if pz[1].islower() else 'UPPER', True)
 
         piece = PIECE_MAP[pz.lower()]
-        return piece(pos, pz.islower(), False)
+        return piece(pos, 'lower' if pz.islower() else 'UPPER', False)
 
     def verify_player_turn(self, pz, player_turn):
         if player_turn is not None:
-            if player_turn == 'lower':
-                return pz.is_lower
-            elif player_turn == 'UPPER':
-                return not pz.is_lower
+            return player_turn == pz.team
         return True
 
     def move_piece(self, pos1, pos2, player_turn, should_promote = False):
+        ''' Return True if move was successful '''
         pz = self.get_piece_at_pos(pos1)
         if pz is not '__' and pz.move(pos2):
             if not self.verify_player_turn(pz, player_turn):
@@ -51,7 +76,7 @@ class Board:
             pz2 = self.get_piece_at_pos(pos2)
 
             if pz2 is not '__':
-                if pz2.is_lower == pz.is_lower:
+                if pz2.team == pz.team:
                     return False
 
                 if player_turn == 'lower':
@@ -59,11 +84,26 @@ class Board:
                 elif player_turn == 'UPPER':
                     self.upper_captures.append(str(pz2)[1].upper())
 
+            if should_promote:
+                if isinstance(pz, King) or isinstance(pz, GoldGeneral):
+                    return False
+
+                if (player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
+                    (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1):
+                    pz.promoted = True
+                else:
+                    return False
             self.set_coord(pz, pos2)
             self.set_coord('__', pos1)
             return True
 
         return False
+
+
+
+    def drop_piece(self, piece, pos):
+        ''' Return True if move was successful '''
+        pass
 
     def get_piece_at_pos(self, a1):
         if utils.in_bounds(a1):

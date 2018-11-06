@@ -24,7 +24,8 @@ def get_coords(a1):
 def get_a1(x, y):
     a = chr(ord('a') + x)
     num = int(y) + 1
-    if num <= 0: return None
+    if num <= 0 or num > const.BOARD_SIZE or \
+        ord(a) < ord('a') or ord(a) >= ord('a') + const.BOARD_SIZE: return None
     return str(a) + str(num)
 
 
