@@ -72,13 +72,15 @@ def play_game_file(board, moves):
         player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
         valid_move = execute_command(board, move, player_turn, False)
         turns += 1
+        if turns >= const.MAX_MOVES * 2: break
         if not valid_move: break
 
     print(player_turn + ' player action: ' + move)
     output_game_state(board)
     player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
-
-    if not valid_move:
+    if turns >= const.MAX_MOVES * 2:
+        print('Tie game.  Too many moves.')
+    elif not valid_move:
         print(player_turn + ' player wins.  Illegal move.')
     else:
         if board.king_in_check(player_turn):
@@ -94,14 +96,13 @@ def play_game_file(board, moves):
         print(player_turn + '> ')
 
 
-
 def play_game_interactive(board):
     ''' Plays game interactively using a turn-based system. '''
 
     turns = 0
     player_turn = 'lower'
 
-    while turns < const.MAX_MOVES:
+    while turns < const.MAX_MOVES * 2:
         output_game_state(board)
 
         # available_moves = board.find_checks(player_turn)
@@ -123,6 +124,7 @@ def play_game_interactive(board):
         if not valid_move:
             print(player_turn + ' player wins. Illegal move.')
             break
+    print('Tie game.  Too many moves.')
 
 
 if __name__ == '__main__':

@@ -41,7 +41,6 @@ class Board:
 
     def pos_in_check(self, a1, player_turn):
         ''' Returns True is a given position is in check (aka can be taken by an opponent's piece). '''
-
         opposing_team = 'lower' if player_turn == 'UPPER' else 'UPPER'
         for a in range(const.BOARD_SIZE):
             for b in range(const.BOARD_SIZE):
@@ -68,11 +67,13 @@ class Board:
 
     def move_piece(self, pos1, pos2, player_turn, should_promote = False):
         ''' Return True if move was successful.
-            Verifies correct player's turn,
-            Promotion is valid (especailly for pawns)
-            Piece is on last row to be promoted
-            Updates board.captures
-
+            Verifies:
+            - Correct player's turn,
+            - Promotion is valid (especailly for pawns)
+            - Piece is on last row to be promoted
+            Side effects:
+            - Updates board.captures
+            - Updates board positions
         '''
         pz = self.get_piece_at_pos(pos1)
         if isinstance(pz, Pawn) and ((player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
@@ -147,7 +148,6 @@ class Board:
 
     def get_piece_at_pos(self, a1):
         ''' Returns piece object at an a1 location. '''
-
         if utils.in_bounds(a1):
             x, y = utils.get_coords(a1)
             if isinstance(self.board[x][y], Piece):
@@ -160,7 +160,6 @@ class Board:
 
     def set_coord(self, piece, a1=None):
         ''' Sets coordinate of a piece. If a1 is None, defaults to piece.position. '''
-
         if a1 is None:
             a1 = piece.position
         if utils.in_bounds(a1):
