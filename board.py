@@ -1,6 +1,46 @@
 import utils
 import const
+from copy import deepcopy
 from pieces import King, Piece, Pawn, Bishop, Rook, SilverGeneral, GoldGeneral
+
+def find_available_moves(board_obj, player_turn):
+    ''' Searches for moves to get out of check. '''
+    available_moves = []
+    for a in range(const.BOARD_SIZE):
+        for b in range(const.BOARD_SIZE):
+            # Moves
+            piece = board_obj.board[a][b]
+            if isinstance(piece, Piece) and piece.team == player_turn:
+                for move in piece.get_possible_moves(board_obj.board, piece.position, piece.team, piece.promoted):
+                    move_str = 'move ' + piece.position + ' ' + move
+                    if board_obj.can_move_piece(piece.position, move, player_turn, True):
+                        if simulate_move(deepcopy(board_obj), piece, move, player_turn, True):
+                            available_moves.append(move_str + ' promote')
+
+                    if board_obj.can_move_piece(piece.position, move, player_turn, False):
+                        if simulate_move(deepcopy(board_obj), piece, move, player_turn, False):
+                            available_moves.append(move_str)
+            # Drops
+            elif piece == '__':
+                captures = board_obj.upper_captures if player_turn == 'UPPER' else board_obj.lower_captures
+                for capture in captures:
+                    pos = utils.get_a1(a, b)
+                    drop_str = 'drop ' + str(capture) + ' ' + pos
+                    if board_obj.can_drop_piece(player_turn, capture, pos):
+                        if simulate_drop(board_obj, player_turn, pz, move):
+                            available_moves.append(drop_str)
+
+    return sorted(available_moves)
+
+def simulate_drop(board_obj, player_turn, pz, move):
+    ''' Must pass in a deepcopy of board_obj '''
+    board_obj.drop_piece(player_turn, pz, move)
+    return not board_obj.king_in_check(player_turn)
+
+def simulate_move(board_obj, pz, move, player_turn, should_promote):
+    ''' Must pass in a deepcopy of board_obj '''
+    board_obj.move_piece(pz.position, move, player_turn, True)
+    return not board_obj.king_in_check(player_turn)
 
 class Board:
     def __init__(self, initial_pieces, upper_captures = [], lower_captures = []):
@@ -13,7 +53,7 @@ class Board:
             self.set_coord(self.get_piece_from_map(piece, pos))
 
     def king_in_check(self, player_turn):
-        ''' Returns True is player's King is in check. '''
+        ''' Returns True is player's King is currently in check. '''
         for a in range(const.BOARD_SIZE):
             for b in range(const.BOARD_SIZE):
                 piece = self.board[a][b]
@@ -21,23 +61,6 @@ class Board:
                     if self.pos_in_check(utils.get_a1(a, b), player_turn):
                         return True
         return False
-
-    def find_available_moves(self, player_turn):
-        ''' Searches for moves to get out of check. '''
-        available_moves = []
-        # Moves
-        for a in range(const.BOARD_SIZE):
-            for b in range(const.BOARD_SIZE):
-                piece = self.board[a][b]
-                if isinstance(piece, Piece) and piece.team == player_turn:
-                    pass
-                    # for move in get_all_moves(): # TODO
-                    # simulate_move()
-                    #     if not self.pos_in_check(a1, player_turn):
-                    #         available_moves.append(move)
-        # Drops
-
-        return available_moves
 
     def pos_in_check(self, a1, player_turn):
         ''' Returns True is a given position is in check (aka can be taken by an opponent's piece). '''
@@ -55,7 +78,6 @@ class Board:
         if len(pz) > 1:
             piece = const.PIECE_MAP[pz[1].lower()]
             return piece(pos, 'lower' if pz[1].islower() else 'UPPER', True)
-
         piece = const.PIECE_MAP[pz.lower()]
         return piece(pos, 'lower' if pz.islower() else 'UPPER', False)
 
@@ -65,49 +87,94 @@ class Board:
             return player_turn == pz.team
         return True
 
+    def should_promote_pawn(self, pz, player_turn, pos2):
+        return isinstance(pz, Pawn) and ((player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
+            (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1))
+
     def move_piece(self, pos1, pos2, player_turn, should_promote = False):
-        ''' Return True if move was successful.
+        '''
+        Expects a valid move.
+        - Updates board.captures
+        - Updates board positions
+        '''
+        pz = self.get_piece_at_pos(pos1)
+        if should_promote or self.should_promote_pawn(pz, player_turn, pos2):
+            pz.promoted = True
+        pz2 = self.get_piece_at_pos(pos2)
+        if pz2 is not '__':
+            if player_turn == 'lower':
+                self.lower_captures.append(str(pz2)[1].lower())
+            elif player_turn == 'UPPER':
+                self.upper_captures.append(str(pz2)[1].upper())
+
+        pz.position = pos2
+        self.set_coord(pz, pos2)
+        self.set_coord('__', pos1)
+
+    def can_move_piece(self, pos1, pos2, player_turn, should_promote = False):
+        ''' Return True if move is valid.
             Verifies:
             - Correct player's turn,
             - Promotion is valid (especailly for pawns)
             - Piece is on last row to be promoted
-            Side effects:
-            - Updates board.captures
-            - Updates board positions
         '''
         pz = self.get_piece_at_pos(pos1)
-        if isinstance(pz, Pawn) and ((player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
-            (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1)):
-            should_promote = True
-
-        if pz is not '__' and pz.move(self.board, pos2):
+        if pz is not '__' and pz.can_move(self.board, pos2):
             if not self.verify_player_turn(pz, player_turn):
                 return False
 
-            if should_promote:
+            if should_promote or self.should_promote_pawn(pz, player_turn, pos2):
                 if pz.promoted or isinstance(pz, King) or isinstance(pz, GoldGeneral):
                     return False
 
-                if (player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
+                if not((player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
                     (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1) or \
                     (player_turn == 'UPPER' and utils.get_coords(pos1)[1] == 0) or \
-                        (player_turn == 'lower' and utils.get_coords(pos1)[1] == const.BOARD_SIZE - 1):
-                    pz.promoted = True
-                else:
+                    (player_turn == 'lower' and utils.get_coords(pos1)[1] == const.BOARD_SIZE - 1)):
                     return False
 
             pz2 = self.get_piece_at_pos(pos2)
-            if pz2 is not '__':
-                if pz2.team == pz.team:
-                    return False
-                if player_turn == 'lower':
-                    self.lower_captures.append(str(pz2)[1].lower())
-                elif player_turn == 'UPPER':
-                    self.upper_captures.append(str(pz2)[1].upper())
+            if pz2 is not '__' and pz2.team == pz.team:
+                return False
 
-            self.set_coord(pz, pos2)
-            self.set_coord('__', pos1)
             return True
+
+        return False
+
+    def can_drop_piece(self, player_turn, piece, pos):
+        ''' Return True if drop is possible '''
+        piece_name = str(piece)
+        if len(piece_name) > 1:
+            piece_name = piece_name[1]
+
+        # Cannot place Pawn in promotion zone or in same row as another Pawn.
+        if piece_name.lower() == 'p':
+            if ((player_turn == 'UPPER' and utils.get_coords(pos)[1] == 0) or \
+                (player_turn == 'lower' and utils.get_coords(pos)[1] == const.BOARD_SIZE - 1)):
+                return False
+            else:
+                x, y = utils.get_coords(pos)
+                for j in range(const.BOARD_SIZE):
+                    if isinstance(self.board[x][j], Pawn) and self.board[x][j].team == player_turn:
+                        return False
+
+        # Only drop pieces in empty spaces
+        if self.get_piece_at_pos(pos) == '__':
+            if player_turn == 'UPPER':
+                for i in range(len(self.upper_captures)):
+                    if self.upper_captures[i].lower() == piece_name.lower():
+                        new_piece = const.PIECE_MAP[piece_name](pos, player_turn)
+                        self.set_coord(new_piece, pos)
+                        del self.upper_captures[i]
+                        return True
+
+            elif player_turn == 'lower':
+                for i in range(len(self.lower_captures)):
+                    if self.lower_captures[i] == piece_name:
+                        new_piece = const.PIECE_MAP[piece_name](pos, player_turn)
+                        self.set_coord(new_piece, pos)
+                        del self.lower_captures[i]
+                        return True
         return False
 
     def drop_piece(self, player_turn, piece, pos):

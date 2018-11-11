@@ -7,13 +7,9 @@ class Piece:
         self.name = 'Piece'
         self.promoted = False
 
-    def move(self, board, new_a1):
+    def can_move(self, board, new_a1):
         possible = self.get_possible_moves(board, self.position, self.team, self.promoted)
-        if new_a1 in possible:
-            self.position = new_a1
-            return True
-
-        return False
+        return new_a1 in possible
 
     def __repr__(self):
         ''' Used to distiguish Piece objects for logging. '''
@@ -29,7 +25,6 @@ class King(Piece):
     def get_possible_moves(board, position, team, promoted):
         possible_moves = set()
         x, y = utils.get_coords(position)
-
         for i in range(-1, 2):
             for j in range(-1, 2):
                 new_pos = utils.get_a1(x + i, y + j)

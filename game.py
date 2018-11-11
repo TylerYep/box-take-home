@@ -2,7 +2,7 @@ import utils
 import sys
 import const
 from pieces import King, Piece, Pawn, Bishop, Rook, SilverGeneral, GoldGeneral
-from board import Board
+from board import Board, find_available_moves
 
 def main():
     argc = len(sys.argv)
@@ -35,15 +35,17 @@ def execute_command(board, move, player_turn, verbose = True):
             should_promote = True
         pos1 = move_arr[1]
         pos2 = move_arr[2]
-
-        valid_move = board.move_piece(pos1, pos2, player_turn, should_promote)
-        return valid_move
+        if board.can_move_piece(pos1, pos2, player_turn, should_promote):
+            board.move_piece(pos1, pos2, player_turn, should_promote)
+            return True
 
     elif move_arr[0] == 'drop':
         piece = move_arr[1]
         pos = move_arr[2]
         valid_move = board.drop_piece(player_turn, piece, pos)
         return valid_move
+
+    return False
 
 
 def output_game_state(board):
@@ -70,7 +72,7 @@ def play_game_file(board, moves):
     player_turn = ''
     for move in moves:
         player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
-        valid_move = execute_command(board, move, player_turn, False)
+        valid_move = execute_command(board, move, player_turn, False) #TODO
         turns += 1
         if turns >= const.MAX_MOVES * 2: break
         if not valid_move: break
@@ -84,7 +86,7 @@ def play_game_file(board, moves):
         print(player_turn + ' player wins.  Illegal move.')
     else:
         if board.king_in_check(player_turn):
-            available_moves = board.find_available_moves(player_turn)
+            available_moves = find_available_moves(board, player_turn)
             if available_moves:
                 print(player_turn + ' player is in check!')
                 print('Available moves: ')
