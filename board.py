@@ -13,6 +13,7 @@ def find_available_moves(board_obj, player_turn):
             if isinstance(piece, Piece) and piece.team == player_turn:
                 for move in piece.get_possible_moves(board_obj.board, piece.position, piece.team, piece.promoted):
                     move_str = 'move ' + piece.position + ' ' + move
+
                     if board_obj.can_move_piece(piece.position, move, player_turn, True):
                         if simulate_move(deepcopy(board_obj), piece, move, player_turn, True):
                             available_moves.append(move_str + ' promote')
@@ -23,13 +24,12 @@ def find_available_moves(board_obj, player_turn):
             # Drops
             elif piece == '__':
                 captures = board_obj.upper_captures if player_turn == 'UPPER' else board_obj.lower_captures
-                for capture in captures:
+                for pz in captures:
                     pos = utils.get_a1(a, b)
-                    drop_str = 'drop ' + str(capture) + ' ' + pos
-                    if board_obj.can_drop_piece(player_turn, capture, pos):
-                        if simulate_drop(board_obj, player_turn, pz, move):
+                    drop_str = 'drop ' + str(pz).lower() + ' ' + pos
+                    if board_obj.can_drop_piece(player_turn, pz, pos):
+                        if simulate_drop(deepcopy(board_obj), player_turn, pz, pos):
                             available_moves.append(drop_str)
-
     return sorted(available_moves)
 
 def simulate_drop(board_obj, player_turn, pz, move):
@@ -37,9 +37,10 @@ def simulate_drop(board_obj, player_turn, pz, move):
     board_obj.drop_piece(player_turn, pz, move)
     return not board_obj.king_in_check(player_turn)
 
+
 def simulate_move(board_obj, pz, move, player_turn, should_promote):
     ''' Must pass in a deepcopy of board_obj '''
-    board_obj.move_piece(pz.position, move, player_turn, True)
+    board_obj.move_piece(pz.position, move, player_turn, should_promote)
     return not board_obj.king_in_check(player_turn)
 
 class Board:
@@ -123,6 +124,9 @@ class Board:
             if not self.verify_player_turn(pz, player_turn):
                 return False
 
+            if isinstance(pz, King) and self.pos_in_check(pos2, player_turn):
+                return False
+
             if should_promote or self.should_promote_pawn(pz, player_turn, pos2):
                 if pz.promoted or isinstance(pz, King) or isinstance(pz, GoldGeneral):
                     return False
@@ -152,11 +156,18 @@ class Board:
             if ((player_turn == 'UPPER' and utils.get_coords(pos)[1] == 0) or \
                 (player_turn == 'lower' and utils.get_coords(pos)[1] == const.BOARD_SIZE - 1)):
                 return False
-            else:
-                x, y = utils.get_coords(pos)
-                for j in range(const.BOARD_SIZE):
-                    if isinstance(self.board[x][j], Pawn) and self.board[x][j].team == player_turn:
-                        return False
+
+            x, y = utils.get_coords(pos)
+            for j in range(const.BOARD_SIZE):
+                if isinstance(self.board[x][j], Pawn) and self.board[x][j].team == player_turn:
+                    return False
+
+            board_obj = deepcopy(self)
+            board_obj.drop_piece(player_turn, piece_name, pos)
+            other_player = utils.get_other_player(player_turn)
+            if board_obj.king_in_check(other_player) and not find_available_moves(board_obj, other_player):
+                return False
+
 
         # Only drop pieces in empty spaces
         if self.get_piece_at_pos(pos) == '__':
@@ -173,16 +184,23 @@ class Board:
 
     def drop_piece(self, player_turn, piece, pos):
         ''' Drops piece '''
-        new_piece = const.PIECE_MAP[piece_name](pos, player_turn)
+        piece_name = str(piece)
+        if len(piece_name) > 1:
+            piece_name = piece_name[1]
+
+        new_piece = const.PIECE_MAP[piece_name.lower()](pos, player_turn)
         self.set_coord(new_piece, pos)
+
         if player_turn == 'UPPER':
             for i in range(len(self.upper_captures)):
                 if self.upper_captures[i].lower() == piece_name.lower():
                     del self.upper_captures[i]
+                    break
         else:
             for i in range(len(self.lower_captures)):
                 if self.lower_captures[i] == piece_name:
                     del self.lower_captures[i]
+                    break
 
     def get_piece_at_pos(self, a1):
         ''' Returns piece object at an a1 location. '''

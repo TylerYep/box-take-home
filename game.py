@@ -22,7 +22,7 @@ def main():
         print('Invalid command line arguments')
 
 
-def execute_command(board, move, player_turn, verbose = True):
+def execute_command(board, move, player_turn, verbose = False):
     ''' Takes any command and manipulated the given board.
         - move (with promote)
         - drop
@@ -73,29 +73,31 @@ def play_game_file(board, moves):
     player_turn = ''
     for move in moves:
         player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
-        valid_move = execute_command(board, move, player_turn, False) #TODO
+        valid_move = execute_command(board, move, player_turn) #TODO
         turns += 1
         if turns >= const.MAX_MOVES * 2: break
         if not valid_move: break
-
     print(player_turn + ' player action: ' + move)
     output_game_state(board)
     player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
+
+    if not valid_move:
+        print(player_turn + ' player wins.  Illegal move.')
+        return
+    elif board.king_in_check(player_turn):
+        available_moves = find_available_moves(board, player_turn)
+        if available_moves:
+            print(player_turn + ' player is in check!')
+            print('Available moves: ')
+            for move in available_moves:
+                print(move)
+        else:
+            print(utils.get_other_player(player_turn) + ' player wins.  Checkmate.')
+            return
+
     if turns >= const.MAX_MOVES * 2:
         print('Tie game.  Too many moves.')
-    elif not valid_move:
-        print(player_turn + ' player wins.  Illegal move.')
     else:
-        if board.king_in_check(player_turn):
-            available_moves = find_available_moves(board, player_turn)
-            if available_moves:
-                print(player_turn + ' player is in check!')
-                print('Available moves: ')
-                for move in available_moves:
-                    print(move)
-            else:
-                print(player_turn + ' Checkmate!')
-
         print(player_turn + '> ')
 
 
@@ -120,7 +122,7 @@ def play_game_interactive(board):
         print(player_turn + ' player action: ' + move)
 
         player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
-        valid_move = execute_command(board, move, player_turn, False)
+        valid_move = execute_command(board, move, player_turn)
         turns += 1
         player_turn = 'lower' if turns % 2 == 0 else 'UPPER'
 

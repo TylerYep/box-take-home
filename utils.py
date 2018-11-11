@@ -1,6 +1,9 @@
 import os
 import const
 
+def get_other_player(player):
+    return 'lower' if player == 'UPPER' else 'UPPER'
+
 def get_coords(a1):
     ''' a1 is the move, given as a letter and a number. '''
     letter, number = a1
