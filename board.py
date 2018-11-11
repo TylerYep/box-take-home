@@ -90,7 +90,7 @@ class Board:
 
     def should_promote_pawn(self, pz, player_turn, pos2):
         return isinstance(pz, Pawn) and ((player_turn == 'UPPER' and utils.get_coords(pos2)[1] == 0) or \
-            (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1))
+                (player_turn == 'lower' and utils.get_coords(pos2)[1] == const.BOARD_SIZE - 1))
 
     def move_piece(self, pos1, pos2, player_turn, should_promote = False):
         '''
