@@ -222,8 +222,8 @@ class SilverGeneral(Piece):
                     new_pos = utils.get_a1(x + i, y - j)
 
                 if utils.in_bounds(new_pos) and not (i == 0 and j == 0) \
-                and not (i == -1 and j == 0) and not (i == 1 and j == 0) \
-                and not (i == 0 and j == -1):
+                    and not (i == -1 and j == 0) and not (i == 1 and j == 0) \
+                    and not (i == 0 and j == -1):
                     possible_moves.add(new_pos)
         return possible_moves
 
@@ -252,7 +252,7 @@ class GoldGeneral(Piece):
                     new_pos = utils.get_a1(x + i, y - j)
 
                 if utils.in_bounds(new_pos) and not (i == 0 and j == 0) \
-                and not (i == -1 and j == -1) and not (i == 1 and j == -1):
+                    and not (i == -1 and j == -1) and not (i == 1 and j == -1):
                     possible_moves.add(new_pos)
         return possible_moves
 

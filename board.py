@@ -146,7 +146,7 @@ class Board:
         return False
 
     def can_drop_piece(self, player_turn, piece, pos):
-        ''' Return True if drop is possible '''
+        ''' Return True if drop is possible. '''
         piece_name = str(piece)
         if len(piece_name) > 1:
             piece_name = piece_name[1]
@@ -168,7 +168,6 @@ class Board:
             if board_obj.king_in_check(other_player) and not find_available_moves(board_obj, other_player):
                 return False
 
-
         # Only drop pieces in empty spaces
         if self.get_piece_at_pos(pos) == '__':
             if player_turn == 'UPPER':
@@ -183,7 +182,7 @@ class Board:
         return False
 
     def drop_piece(self, player_turn, piece, pos):
-        ''' Drops piece '''
+        ''' Drops piece in specified location. Assumes location is valid. '''
         piece_name = str(piece)
         if len(piece_name) > 1:
             piece_name = piece_name[1]
@@ -211,7 +210,7 @@ class Board:
             else:
                 return '__'
         else:
-            print("Not in bounds")
+            print("Coordinate not in bounds.")
             return False
 
     def set_coord(self, piece, a1=None):
@@ -222,7 +221,7 @@ class Board:
             x, y = utils.get_coords(a1)
             self.board[x][y] = piece
         else:
-            print("SET COORD ERROR")
+            print("Error setting coordinate.")
 
     def __repr__(self):
         ''' Used to distiguish Board objects for logging. '''

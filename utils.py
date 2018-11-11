@@ -2,6 +2,7 @@ import os
 import const
 
 def get_other_player(player):
+    ''' Returns other player, lower or upper. '''
     return 'lower' if player == 'UPPER' else 'UPPER'
 
 def get_coords(a1):
@@ -13,6 +14,7 @@ def get_coords(a1):
 
 
 def get_a1(x, y):
+    ''' Converts an x,y coordinate into a1 format. '''
     a = chr(ord('a') + x)
     num = int(y) + 1
     if num <= 0 or num > const.BOARD_SIZE or \
@@ -21,12 +23,14 @@ def get_a1(x, y):
 
 
 def in_bounds(a1):
+    ''' Returns true if the given a1 coordinate is in bounds. Defaults true when a1 = None. '''
     if a1 is None: return False
     x, y = get_coords(a1)
     return x >= 0 and x < const.BOARD_SIZE and y >= 0 and y < const.BOARD_SIZE
 
 
 def stringifyBoard(board):
+    ''' Converts board to string. '''
     s = ''
     for row in range(len(board) - 1, -1, -1):
         s += '' + str(row + 1) + ' |'
