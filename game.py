@@ -42,8 +42,9 @@ def execute_command(board, move, player_turn, verbose = True):
     elif move_arr[0] == 'drop':
         piece = move_arr[1]
         pos = move_arr[2]
-        valid_move = board.drop_piece(player_turn, piece, pos)
-        return valid_move
+        if board.can_drop_piece(player_turn, piece, pos):
+            board.drop_piece(player_turn, piece, pos)
+            return True
 
     return False
 

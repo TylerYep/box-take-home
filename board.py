@@ -163,55 +163,26 @@ class Board:
             if player_turn == 'UPPER':
                 for i in range(len(self.upper_captures)):
                     if self.upper_captures[i].lower() == piece_name.lower():
-                        new_piece = const.PIECE_MAP[piece_name](pos, player_turn)
-                        self.set_coord(new_piece, pos)
-                        del self.upper_captures[i]
                         return True
 
             elif player_turn == 'lower':
                 for i in range(len(self.lower_captures)):
                     if self.lower_captures[i] == piece_name:
-                        new_piece = const.PIECE_MAP[piece_name](pos, player_turn)
-                        self.set_coord(new_piece, pos)
-                        del self.lower_captures[i]
                         return True
         return False
 
     def drop_piece(self, player_turn, piece, pos):
-        ''' Return True if drop was successful '''
-        piece_name = str(piece)
-        if len(piece_name) > 1:
-            piece_name = piece_name[1]
-
-        # Cannot place Pawn in promotion zone or in same row as another Pawn.
-        if piece_name.lower() == 'p':
-            if ((player_turn == 'UPPER' and utils.get_coords(pos)[1] == 0) or \
-                (player_turn == 'lower' and utils.get_coords(pos)[1] == const.BOARD_SIZE - 1)):
-                return False
-            else:
-                x, y = utils.get_coords(pos)
-                for j in range(const.BOARD_SIZE):
-                    if isinstance(self.board[x][j], Pawn) and self.board[x][j].team == player_turn:
-                        return False
-
-        # Only drop pieces in empty spaces
-        if self.get_piece_at_pos(pos) == '__':
-            if player_turn == 'UPPER':
-                for i in range(len(self.upper_captures)):
-                    if self.upper_captures[i].lower() == piece_name.lower():
-                        new_piece = const.PIECE_MAP[piece_name](pos, player_turn)
-                        self.set_coord(new_piece, pos)
-                        del self.upper_captures[i]
-                        return True
-
-            elif player_turn == 'lower':
-                for i in range(len(self.lower_captures)):
-                    if self.lower_captures[i] == piece_name:
-                        new_piece = const.PIECE_MAP[piece_name](pos, player_turn)
-                        self.set_coord(new_piece, pos)
-                        del self.lower_captures[i]
-                        return True
-        return False
+        ''' Drops piece '''
+        new_piece = const.PIECE_MAP[piece_name](pos, player_turn)
+        self.set_coord(new_piece, pos)
+        if player_turn == 'UPPER':
+            for i in range(len(self.upper_captures)):
+                if self.upper_captures[i].lower() == piece_name.lower():
+                    del self.upper_captures[i]
+        else:
+            for i in range(len(self.lower_captures)):
+                if self.lower_captures[i] == piece_name:
+                    del self.lower_captures[i]
 
     def get_piece_at_pos(self, a1):
         ''' Returns piece object at an a1 location. '''
