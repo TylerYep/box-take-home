@@ -1,11 +1,24 @@
 import utils
 
 class Piece:
-    def __init__(self, position, team, promoted=False):
+    def __init__(self, position, team, promoted=False, supported=False):
         self.position = position
         self.team = team
         self.name = 'Piece'
         self.promoted = False
+
+    @staticmethod
+    def get_supporting_piece(board, position, team):
+        x, y = utils.get_coords(position)
+        if team == 'lower':
+            if utils.in_bounds(utils.get_a1(x, y-1)):
+                if board[x][y-1] != '__' and board[x][y-1].team == team:
+                    return board[x][y-1]
+        else:
+            if utils.in_bounds(utils.get_a1(x, y+1)):
+                if board[x][y+1] != '__' and board[x][y+1].team == team:
+                    return board[x][y+1]
+        return '__'
 
     def can_move(self, board, new_a1):
         possible = self.get_possible_moves(board, self.position, self.team, self.promoted)
@@ -22,8 +35,17 @@ class King(Piece):
         self.name = 'King'
 
     @staticmethod
-    def get_possible_moves(board, position, team, promoted):
+    def get_possible_moves(board, position, team, promoted, supported = True, enhance_piece = None):
         possible_moves = set()
+        if enhance_piece is not None:
+            possible_moves |= enhance_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
+
+        if supported:
+            suporting_piece = Piece.get_supporting_piece(board, position, team)
+
+            if suporting_piece != '__':
+                possible_moves |= suporting_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
+
         x, y = utils.get_coords(position)
         for i in range(-1, 2):
             for j in range(-1, 2):
@@ -42,17 +64,28 @@ class King(Piece):
 
 
 class Pawn(Piece):
-    def __init__(self, position, team, promoted=False):
+    def __init__(self, position, team, promoted=False, supported=False):
         super().__init__(position, team)
         self.name = 'Pawn'
         self.promoted = promoted
+        self.supported = supported
 
     @staticmethod
-    def get_possible_moves(board, position, team, promoted):
-        if promoted:
-            return GoldGeneral.get_possible_moves(board, position, team, False)
-
+    def get_possible_moves(board, position, team, promoted, supported = True, enhance_piece = None):
         possible_moves = set()
+        if enhance_piece is not None:
+            possible_moves |= enhance_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
+        if supported:
+            suporting_piece = Piece.get_supporting_piece(board, position, team)
+            if suporting_piece != '__':
+                possible_moves |= suporting_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
+
+        if promoted:
+            possible_moves += GoldGeneral.get_possible_moves(board, position, team, False, False)
+            print(possible_moves)
+
+            return possible_moves
+
         x, y = utils.get_coords(position)
 
         new_pos = utils.get_a1(x, y + 1)
@@ -60,6 +93,7 @@ class Pawn(Piece):
             new_pos = utils.get_a1(x, y - 1)
         if utils.in_bounds(new_pos):
             possible_moves.add(new_pos)
+        print(possible_moves)
         return possible_moves
 
     def __repr__(self):
@@ -72,16 +106,24 @@ class Pawn(Piece):
 
 
 class Rook(Piece):
-    def __init__(self, position, team, promoted=False):
+    def __init__(self, position, team, promoted=False, supported=False):
         super().__init__(position, team)
         self.name = 'Rook'
         self.promoted = promoted
+        self.supported = supported
 
     @staticmethod
-    def get_possible_moves(board, position, team, promoted):
+    def get_possible_moves(board, position, team, promoted, supported = True, enhance_piece = None):
         possible_moves = set()
+        if enhance_piece is not None:
+            possible_moves |= enhance_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
+        if supported:
+            suporting_piece = Piece.get_supporting_piece(board, position, team)
+            if suporting_piece != '__':
+                possible_moves |= suporting_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
+
         if promoted:
-            possible_moves |= King.get_possible_moves(board, position, team, False)
+            possible_moves |= King.get_possible_moves(board, position, team, False, False)
 
         x, y = utils.get_coords(position)
         for i in range(1, len(board)):
@@ -142,10 +184,16 @@ class Bishop(Piece):
         self.promoted = promoted
 
     @staticmethod
-    def get_possible_moves(board, position, team, promoted):
+    def get_possible_moves(board, position, team, promoted, supported = True, enhance_piece = None):
         possible_moves = set()
+        if enhance_piece is not None:
+            possible_moves |= enhance_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
+        if supported:
+            suporting_piece = Piece.get_supporting_piece(board, position, team)
+            if suporting_piece != '__':
+                possible_moves |= suporting_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
         if promoted:
-            possible_moves |= King.get_possible_moves(board, position, team, False)
+            possible_moves |= King.get_possible_moves(board, position, team, False, False)
         x, y = utils.get_coords(position)
 
         for i in range(1, len(board)):
@@ -208,11 +256,18 @@ class SilverGeneral(Piece):
         self.promoted = promoted
 
     @staticmethod
-    def get_possible_moves(board, position, team, promoted):
-        if promoted:
-            return GoldGeneral.get_possible_moves(board, position, team, False)
-
+    def get_possible_moves(board, position, team, promoted, supported = True, enhance_piece = None):
         possible_moves = set()
+        if enhance_piece is not None:
+            possible_moves |= enhance_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
+        if supported:
+            suporting_piece = Piece.get_supporting_piece(board, position, team)
+            if suporting_piece != '__':
+                possible_moves |= suporting_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
+        if promoted:
+            possible_moves |= GoldGeneral.get_possible_moves(board, position, team, False, False)
+            return possible_moves
+
         x, y = utils.get_coords(position)
 
         for i in range(-1, 2):
@@ -242,8 +297,14 @@ class GoldGeneral(Piece):
         self.name = 'GoldGeneral'
 
     @staticmethod
-    def get_possible_moves(board, position, team, promoted):
+    def get_possible_moves(board, position, team, promoted, supported = True, enhance_piece = None):
         possible_moves = set()
+        if enhance_piece is not None:
+            possible_moves |= enhance_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
+        if supported:
+            suporting_piece = Piece.get_supporting_piece(board, position, team)
+            if suporting_piece != '__':
+                possible_moves |= suporting_piece.get_possible_moves(board, position, team, suporting_piece.promoted, False)
         x, y = utils.get_coords(position)
         for i in range(-1, 2):
             for j in range(-1, 2):

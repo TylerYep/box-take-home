@@ -169,7 +169,7 @@ class Board:
                 return False
 
         # Only drop pieces in empty spaces
-        if self.get_piece_at_pos(pos) == '__':
+        if self.get_piece_at_pos(pos) == '__' or self.get_piece_at_pos(pos).team == player_turn:
             if player_turn == 'UPPER':
                 for i in range(len(self.upper_captures)):
                     if self.upper_captures[i].lower() == piece_name.lower():
@@ -187,19 +187,23 @@ class Board:
         if len(piece_name) > 1:
             piece_name = piece_name[1]
 
-        new_piece = const.PIECE_MAP[piece_name.lower()](pos, player_turn)
-        self.set_coord(new_piece, pos)
-
-        if player_turn == 'UPPER':
-            for i in range(len(self.upper_captures)):
-                if self.upper_captures[i].lower() == piece_name.lower():
-                    del self.upper_captures[i]
-                    break
+        enhance_piece = self.get_piece_at_pos(pos)
+        if enhance_piece != '__':
+            enhance_piece
         else:
-            for i in range(len(self.lower_captures)):
-                if self.lower_captures[i] == piece_name:
-                    del self.lower_captures[i]
-                    break
+            new_piece = const.PIECE_MAP[piece_name.lower()](pos, player_turn)
+            self.set_coord(new_piece, pos)
+
+            if player_turn == 'UPPER':
+                for i in range(len(self.upper_captures)):
+                    if self.upper_captures[i].lower() == piece_name.lower():
+                        del self.upper_captures[i]
+                        break
+            else:
+                for i in range(len(self.lower_captures)):
+                    if self.lower_captures[i] == piece_name:
+                        del self.lower_captures[i]
+                        break
 
     def get_piece_at_pos(self, a1):
         ''' Returns piece object at an a1 location. '''
